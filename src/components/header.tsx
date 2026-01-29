@@ -9,7 +9,7 @@ export function Header() {
       <div className='max-w-4xl mx-auto px-6 py-5 flex items-center justify-between'>
         <Link
           href='/'
-          className='flex items-center gap-2.5 hover:opacity-70 transition-opacity'
+          className='flex items-center gap-2 hover:opacity-70 transition-opacity'
         >
           <Rocket className='size-4 text-primary' />
           <span className='text-lg font-semibold text-foreground'>Silch</span>
