@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String            @id @default(uuid())
+  walletAddress String            @unique
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  intents       EphemeralIntent[]
+}
+
+model EphemeralIntent {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  ephemeralAddress String
+  encryptedSecret  String
+  expectedLamports BigInt
+  expiresAt        DateTime
+  paidAt           DateTime?
+  note             String?
+  claimed          Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+}
