@@ -3,10 +3,12 @@ import NextAuth, { type DefaultSession } from 'next-auth'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { JWT } from 'next-auth/jwt'
 import Credentials from 'next-auth/providers/credentials'
+import { createOrGetUser } from './lib/db-queries'
 
 declare module 'next-auth/jwt' {
   interface JWT {
     walletAddress?: string
+    agentWalletAddress?: string
     id?: string
   }
 }
@@ -15,11 +17,12 @@ declare module 'next-auth' {
   interface Session {
     user: {
       walletAddress?: string
+      agentWalletAddress?: string
     } & DefaultSession['user']
   }
 }
 
-export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
+export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
@@ -28,10 +31,10 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
       async authorize(credentials) {
         const { walletAddress } = credentials || {}
         if (!walletAddress) return null
-        // const user = await createOrGetUser(walletAddress as string)
-        // if (!user) return null
+        const user = await createOrGetUser(walletAddress as string)
+        if (!user) return null
         return {
-          id: crypto.randomUUID(),
+          id: user.id,
           walletAddress: walletAddress as string,
         }
       },
@@ -53,15 +56,9 @@ export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
       }
       return isLoggedIn || isAPublicRoute
     },
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user }) {
       if (user) {
         token = { ...token, ...user }
-      }
-      if (trigger === 'update' && session.user.agentWalletAddress) {
-        token = {
-          ...token,
-          agentWalletAddress: session.user.agentWalletAddress,
-        }
       }
       return token
     },
