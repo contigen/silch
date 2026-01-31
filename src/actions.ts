@@ -21,17 +21,30 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { auth } from './auth'
 import { decryptPrivateKey, encryptPrivateKey } from './lib/cipher'
-import { prisma } from './lib/prisma'
+import {
+  createZKReceiptProofRecord,
+  createEphemeralIntent as dbCreateEphemeralIntent,
+  getEphemeralIntentById,
+  getZKReceiptProofByIntentId,
+  type Intent,
+  updateEphemeralIntentClaimed,
+  updateEphemeralIntentPaid,
+} from './lib/db-queries'
+import { generateZkReceiptProof } from './lib/generate-proof'
 import { createClient } from './lib/solana'
+import {
+  generateNullifier,
+  generateRecipientCommitment,
+  hexToBigInt,
+} from './lib/utils'
+import { verifyZkReceiptProof } from './lib/verify-proof'
+import { generateAndVerifyZkProofCLI } from './lib/zk-proof-cli'
 
 function encodeTransferAmount(lamports: bigint): Uint8Array {
   const data = new Uint8Array(12)
   const view = new DataView(data.buffer)
-
   view.setUint32(0, 2, true)
-
   view.setBigInt64(4, lamports, true)
-
   return data
 }
 
@@ -81,21 +94,22 @@ export async function createEphemeralAccount() {
 export async function createEphemeralIntent(
   expectedLamports: bigint,
   ttlMinutes = 15,
+  note?: string,
 ) {
   const userId = await getUserId()
 
   const { address: ephemeralAddress, privateKey } =
     await createEphemeralAccount()
-
-  const intent = await prisma.ephemeralIntent.create({
-    data: {
-      userId,
-      ephemeralAddress,
-      encryptedSecret: privateKey,
-      expectedLamports,
-      expiresAt: new Date(Date.now() + ttlMinutes * 60_000),
-    },
+  const intent = await dbCreateEphemeralIntent(userId, {
+    ephemeralAddress,
+    encryptedSecret: privateKey,
+    expectedLamports,
+    expiresAt: new Date(Date.now() + ttlMinutes * 60_000),
+    note,
   })
+  if (!intent) {
+    throw new Error('Failed to create payment intent')
+  }
   return intent
 }
 
@@ -105,24 +119,23 @@ export async function createPaymentLink(intentId: string) {
 }
 
 export async function getEphemeralIntent(intentId: string) {
-  const intent = await prisma.ephemeralIntent.findUnique({
-    where: { id: intentId },
-    include: { user: true },
-  })
+  const intent = await getEphemeralIntentById(intentId)
+
   if (!intent) {
     throw new Error('Payment link not found or has expired')
   }
+
   if (intent.expiresAt < new Date()) {
     throw new Error('Payment link has expired')
   }
-  if (intent.claimed) {
-    throw new Error('Payment link has already been used')
-  }
+
   return {
     id: intent.id,
     ephemeralAddress: intent.ephemeralAddress,
     expectedLamports: intent.expectedLamports,
     expiresAt: intent.expiresAt,
+    claimed: intent.claimed,
+    note: intent.note,
   }
 }
 
@@ -130,9 +143,7 @@ export async function buildPaymentTransaction(intentId: string) {
   await getUserId()
   const client = await createClient()
 
-  const intent = await prisma.ephemeralIntent.findUnique({
-    where: { id: intentId },
-  })
+  const intent = await getEphemeralIntentById(intentId)
 
   if (!intent) throw new Error('Invalid payment link')
   if (intent.claimed) throw new Error('Already claimed')
@@ -145,7 +156,6 @@ export async function buildPaymentTransaction(intentId: string) {
       throw new Error('Failed to retrieve blockhash from RPC')
     }
     const { blockhash } = latestBlockhash
-    console.log('Successfully retrieved blockhash:', blockhash)
     return {
       success: true,
       intentId,
@@ -159,30 +169,100 @@ export async function buildPaymentTransaction(intentId: string) {
   }
 }
 
+const SNARK_FIELD =
+  21888242871839275222246405745257275088548364400416034343698204186575808495617n
+
+async function generatePaymentProof(
+  intentId: string,
+  secretKey: string,
+  recipientAddress: string,
+  amount: string,
+) {
+  const recipientCommitment = generateRecipientCommitment(recipientAddress)
+  const nullifier = await generateNullifier(secretKey, recipientCommitment)
+
+  const circuitInput = {
+    recipientCommitment: (
+      hexToBigInt(recipientCommitment) % SNARK_FIELD
+    ).toString(),
+    minAmount: '5000000',
+    amount,
+    secretKey: (hexToBigInt(secretKey) % SNARK_FIELD).toString(),
+    nullifier: (hexToBigInt(nullifier) % SNARK_FIELD).toString(),
+  }
+  // errrors out if the arguments passed are file path, suspends if buffers are passed
+
+  // const { proof, publicSignals } = await generateZkReceiptProof(circuitInput)
+
+  // switch to CLI-based proof generation and verification
+  const { proof, publicSignals } = await generateAndVerifyZkProofCLI(
+    intentId,
+    circuitInput,
+  )
+  return createZKReceiptProofRecord(intentId, {
+    proof: JSON.stringify(proof),
+    publicSignals: JSON.stringify(publicSignals),
+    nullifier,
+  })
+}
+
+async function generatePaymentProofWithTimeout(
+  intentId: string,
+  secretKey: string,
+  recipientAddress: string,
+  amount: string,
+  timeoutMs = 6_000,
+) {
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Proof generation timeout')), timeoutMs)
+  })
+  const proofPromise = generatePaymentProof(
+    intentId,
+    secretKey,
+    recipientAddress,
+    amount,
+  )
+  return Promise.race([proofPromise, timeoutPromise])
+}
+
 export async function submitPaymentTransaction(
   intentId: string,
   signedTransactionBase58: string,
 ) {
   await getUserId()
   const client = await createClient()
-  const intent = await prisma.ephemeralIntent.findUnique({
-    where: { id: intentId },
-  })
+  const intent = await getEphemeralIntentById(intentId)
   if (!intent) throw new Error('Intent not found')
   if (intent.claimed) throw new Error('Already claimed')
+  if (intent.expiresAt < new Date()) throw new Error('Link expired')
   try {
-    console.log(
-      '[submitPaymentTransaction] Received base58 length:',
-      signedTransactionBase58.length,
-    )
     const signature = await client.rpc
       .sendTransaction(signedTransactionBase58 as Base64EncodedWireTransaction)
       .send()
 
     console.log('[submitPaymentTransaction] Transaction successful:', signature)
+    await updateEphemeralIntentPaid(intentId)
 
+    console.log('[submitPaymentTransaction] Starting proof generation...')
     try {
-      const drainSignature = await drainEphemeralAccount(intentId)
+      const result = await generatePaymentProofWithTimeout(
+        intentId,
+        decryptPrivateKey(intent.encryptedSecret),
+        intent.ephemeralAddress,
+        intent.expectedLamports.toString(),
+      )
+      console.log(
+        '[submitPaymentTransaction] Proof generation successful:',
+        result,
+      )
+    } catch (proofError) {
+      console.error(
+        '[submitPaymentTransaction] Proof generation failed:',
+        proofError,
+      )
+    }
+    try {
+      const drainSignature = await drainEphemeralAccount(intent)
       console.log(
         '[submitPaymentTransaction] Drain successful:',
         drainSignature,
@@ -190,10 +270,7 @@ export async function submitPaymentTransaction(
     } catch (drainError) {
       console.error('[submitPaymentTransaction] Drain failed:', drainError)
     }
-    await prisma.ephemeralIntent.update({
-      where: { id: intentId },
-      data: { claimed: true },
-    })
+    await updateEphemeralIntentClaimed(intentId)
     return signature
   } catch (error) {
     console.error('[submitPaymentTransaction] Error:', error)
@@ -203,58 +280,9 @@ export async function submitPaymentTransaction(
   }
 }
 
-export async function sendPrivatePayment(
-  intentId: string,
-  payer: TransactionSigner,
-) {
+async function drainEphemeralAccount(intent: Intent) {
+  const intentId = intent.id!
   const client = await createClient()
-
-  const intent = await prisma.ephemeralIntent.findUnique({
-    where: { id: intentId },
-  })
-
-  if (!intent) throw new Error('Invalid payment link')
-  if (intent.claimed) throw new Error('Already claimed')
-  if (intent.expiresAt < new Date()) throw new Error('Link expired')
-
-  const { value: latestBlockhash } = await client.rpc
-    .getLatestBlockhash()
-    .send()
-
-  const instruction: Instruction = {
-    programAddress: address('11111111111111111111111111111111'),
-    accounts: [
-      { address: payer.address, role: AccountRole.WRITABLE_SIGNER },
-      { address: address(intent.ephemeralAddress), role: AccountRole.WRITABLE },
-    ],
-    data: encodeTransferAmount(intent.expectedLamports),
-  }
-
-  const transaction = pipe(
-    createTransactionMessage({ version: 0 }),
-    m => setTransactionMessageFeePayerSigner(payer, m),
-    m => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, m),
-    m => appendTransactionMessageInstruction(instruction, m),
-  )
-
-  const signedTransaction = await signTransactionMessageWithSigners(transaction)
-  const encodedTransaction = getBase64EncodedWireTransaction(signedTransaction)
-
-  const signature = await client.rpc.sendTransaction(encodedTransaction).send()
-
-  return signature
-}
-
-async function drainEphemeralAccount(intentId: string) {
-  const client = await createClient()
-
-  const intent = await prisma.ephemeralIntent.findUnique({
-    where: { id: intentId },
-    include: { user: true },
-  })
-
-  if (!intent) throw new Error('Intent not found')
-  if (intent.claimed) throw new Error('Already claimed')
 
   const decryptedSeedHex = decryptPrivateKey(intent.encryptedSecret)
   const privateKeySeed = Buffer.from(decryptedSeedHex, 'hex')
@@ -305,32 +333,35 @@ async function drainEphemeralAccount(intentId: string) {
     .sendTransaction(encodedTransaction as Base64EncodedWireTransaction)
     .send()
 
-  await prisma.ephemeralIntent.update({
-    where: { id: intentId },
-    data: { claimed: true },
-  })
+  await updateEphemeralIntentClaimed(intentId)
   return signature
 }
 
-export async function generateReceipt(intent: {
-  id: string
-  ephemeralAddress: string
-  createdAt: Date
-}) {
-  await getUserId()
+export async function getPaymentStatus(intentId: string) {
+  const userId = await getUserId()
+  const intent = await getEphemeralIntentById(intentId)
+  if (!intent) {
+    throw new Error('Payment not found')
+  }
+  // if (intent.userId !== userId) {
+  //   throw new Error('Unauthorized to view this payment')
+  // }
+  // Generate a unique receipt hash (deterministic but not revealing)
+  const receiptHash = `0x${Buffer.from(`${intentId}-${intent.createdAt.getTime()}`).toString('hex').slice(0, 64)}`
+
   return {
-    receiptId: intent.id,
-    ephemeralAddress: intent.ephemeralAddress,
-    issuedAt: intent.createdAt,
-    note: 'Payment completed via one-time private address',
+    receiptId: intentId,
+    receiptHash,
+    createdAt: intent.createdAt,
+    paidAt: intent.paidAt,
+    claimed: intent.claimed,
+    note: intent.note,
   }
 }
 
 export async function subscribeToEphemeralPayment(intentId: string) {
   const client = await createClient()
-  const intent = await prisma.ephemeralIntent.findUnique({
-    where: { id: intentId },
-  })
+  const intent = await getEphemeralIntentById(intentId)
 
   if (!intent) throw new Error('Intent not found')
   if (intent.claimed) return
@@ -346,15 +377,23 @@ export async function subscribeToEphemeralPayment(intentId: string) {
   for await (const notification of subscription) {
     const lamportsBalance = notification.value.lamports
     if (lamportsBalance < intent.expectedLamports) continue
-    const fresh = await prisma.ephemeralIntent.findUnique({
-      where: { id: intentId },
-    })
+    const fresh = await getEphemeralIntentById(intentId)
     if (fresh?.paidAt) break
-    await prisma.ephemeralIntent.update({
-      where: { id: intentId },
-      data: { paidAt: new Date() },
-    })
+    await updateEphemeralIntentPaid(intentId)
     abortController.abort()
     break
+  }
+}
+
+export async function verifyPaymentProof(intentId: string) {
+  const zkReceipt = await getZKReceiptProofByIntentId(intentId)
+  if (!zkReceipt) {
+    return { success: false, error: 'Proof not found' }
+  }
+  return {
+    success: true,
+    proof: JSON.parse(zkReceipt.proof as string),
+    publicSignals: JSON.parse(zkReceipt.publicSignals as string),
+    timestamp: zkReceipt.createdAt.toISOString(),
   }
 }
