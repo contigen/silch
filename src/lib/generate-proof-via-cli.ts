@@ -7,11 +7,10 @@ const exec = promisify(execFile)
 
 function getSnarkjsPath() {
   const possiblePaths = [
-    // Local node_modules
-    path.join(process.cwd(), 'node_modules', '.bin', 'snarkjs'),
-    // Vercel/Lambda might have it here
     path.join(process.cwd(), 'node_modules', 'snarkjs', 'build', 'cli.cjs'),
-    // Or directly in snarkjs package
+    // Fallback to symlink (local development)
+    path.join(process.cwd(), 'node_modules', '.bin', 'snarkjs'),
+    // Alternative location
     path.join(process.cwd(), 'node_modules', 'snarkjs', 'cli.js'),
   ]
 
