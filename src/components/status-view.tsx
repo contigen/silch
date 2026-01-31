@@ -243,10 +243,6 @@ export function StatusView({ status, proofData }: StatusViewProps) {
               >
                 Copy Receipt
               </Button>
-              <Button variant='outline' className='flex-1 bg-transparent'>
-                <Download className='w-4 h-4 mr-2' />
-                Export
-              </Button>
             </div>
             {proofData?.success &&
               proofData.proof &&
