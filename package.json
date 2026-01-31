@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
@@ -29,7 +29,7 @@
     "clsx": "^2.1.1",
     "geist": "1.1.0",
     "lucide-react": "^0.563.0",
-    "next": "^16.1.4",
+    "next": "^16.1.6",
     "next-auth": "^5.0.0-beta.30",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
