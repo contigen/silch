@@ -1,20 +1,20 @@
 'use client'
 
-import { use, useState } from 'react'
-import { Header } from '@/components/header'
 import { ArrowRight, Lock } from 'lucide-react'
-import { connectWallet } from '@/lib/wallet'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
+import { use, useState } from 'react'
 import { toast } from 'sonner'
+import { Header } from '@/components/header'
 import { Spinner } from '@/components/ui/spinner'
+import { connectWallet } from '@/lib/wallet'
 
 export default function ConnectPage({ searchParams }: PageProps<'/connect'>) {
   const [isConnecting, setIsConnecting] = useState(false)
 
   const wallets = [
-    { id: 'MetaMask', name: 'MetaMask', icon: '🦊' },
     { id: 'phantom', name: 'Phantom', icon: '👻' },
+    { id: 'MetaMask', name: 'MetaMask', icon: '🦊' },
     { id: 'solflare', name: 'Solflare', icon: '🔥' },
     { id: 'magic-eden', name: 'Magic Eden', icon: '✨' },
   ]
@@ -45,10 +45,10 @@ export default function ConnectPage({ searchParams }: PageProps<'/connect'>) {
     <div className='min-h-screen bg-background'>
       <Header />
 
-      <main className='max-w-4xl mx-auto px-6 py-12 md:py-20'>
+      <main className='max-w-4xl px-6 py-12 mx-auto md:py-20'>
         <div className='flex flex-col items-center'>
           <div className='mb-12 text-center'>
-            <h1 className='text-4xl md:text-5xl font-bold text-foreground mb-4 text-balance leading-tight'>
+            <h1 className='mb-4 text-4xl font-bold leading-tight md:text-5xl text-foreground text-balance'>
               Connect Your Wallet
             </h1>
             <p
@@ -64,6 +64,7 @@ export default function ConnectPage({ searchParams }: PageProps<'/connect'>) {
           <div className='w-full max-w-md space-y-4'>
             {wallets.map((wallet, idx) => (
               <button
+                type='button'
                 key={wallet.id}
                 onClick={handleConnect}
                 disabled={idx > 0}
@@ -89,11 +90,11 @@ export default function ConnectPage({ searchParams }: PageProps<'/connect'>) {
               </button>
             ))}
 
-            <div className='mt-8 p-4 rounded-lg bg-primary/5 border border-primary/20 space-y-3'>
-              <div className='flex gap-2 items-start'>
+            <div className='p-4 mt-8 space-y-3 border rounded-lg bg-primary/5 border-primary/20'>
+              <div className='flex items-start gap-2'>
                 <Lock className='w-5 h-5 text-primary shrink-0 mt-0.5' />
                 <div>
-                  <p className='font-medium text-foreground mb-1'>
+                  <p className='mb-1 font-medium text-foreground'>
                     Secure Connection
                   </p>
                   <p className='text-sm text-foreground/70'>
