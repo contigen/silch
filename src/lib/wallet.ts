@@ -9,6 +9,10 @@ declare global {
           message: Uint8Array,
           display?: string,
         ): Promise<{ signature: Uint8Array }>
+        signTransaction<T>(transaction: T): Promise<T>
+        signAndSendTransaction<T>(
+          transaction: T,
+        ): Promise<{ signature: string }>
       }
     }
   }
