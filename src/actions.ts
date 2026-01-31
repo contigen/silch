@@ -10,6 +10,7 @@ import {
   getBase64EncodedWireTransaction,
   type Instruction,
   pipe,
+  type Signature,
   setTransactionMessageFeePayerSigner,
   setTransactionMessageLifetimeUsingBlockhash,
   signTransactionMessageWithSigners,
@@ -46,6 +47,45 @@ function encodeTransferAmount(lamports: bigint): Uint8Array {
   view.setUint32(0, 2, true)
   view.setBigInt64(4, lamports, true)
   return data
+}
+
+async function waitForTransactionConfirmation(
+  client: Awaited<ReturnType<typeof createClient>>,
+  signature: Signature,
+  timeoutMs = 30_000,
+  pollIntervalMs = 1_000,
+) {
+  const startTime = Date.now()
+  while (Date.now() - startTime < timeoutMs) {
+    try {
+      const response = await client.rpc.getSignatureStatuses([signature]).send()
+      const status = response.value[0]
+      if (status === null) {
+        await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
+        continue
+      }
+      if (status.err) {
+        throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`)
+      }
+      if (
+        status.confirmationStatus === 'confirmed' ||
+        status.confirmationStatus === 'finalized'
+      ) {
+        console.log(
+          `[waitForTransactionConfirmation] Transaction confirmed with status: ${status.confirmationStatus}`,
+        )
+        return status
+      }
+      await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
+    } catch (error) {
+      console.error(
+        '[waitForTransactionConfirmation] Error checking status:',
+        error,
+      )
+      await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
+    }
+  }
+  throw new Error(`Transaction confirmation timeout after ${timeoutMs}ms`)
 }
 
 export async function getUserSession() {
@@ -243,8 +283,14 @@ export async function submitPaymentTransaction(
       .send()
 
     console.log('[submitPaymentTransaction] Transaction successful:', signature)
-    await updateEphemeralIntentPaid(intentId)
 
+    // Wait for transaction confirmation before proceeding
+    console.log(
+      '[submitPaymentTransaction] Waiting for transaction confirmation...',
+    )
+    await waitForTransactionConfirmation(client, signature)
+    console.log('[submitPaymentTransaction] Transaction confirmed on-chain')
+    await updateEphemeralIntentPaid(intentId)
     console.log('[submitPaymentTransaction] Starting proof generation...')
     try {
       const result = await generatePaymentProofWithTimeout(
