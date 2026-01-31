@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Silch
 
-## Getting Started
+**Private-by-default crypto payments using one-time addresses.**
 
-First, run the development server:
+Silch lets people receive crypto payments **without exposing their entire wallet history**.  
+Each payment uses a **one-time address**, preventing address reuse and reducing unwanted financial visibility.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## The Problem
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Public blockchains make payments transparent by default.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+That’s great for settlement — but terrible for everyday use.
 
-## Learn More
+Reusing a wallet address means:
+- anyone can see past and future payments
+- income patterns become public
+- private relationships are exposed
 
-To learn more about Next.js, take a look at the following resources:
+This makes crypto awkward for creators, freelancers, and normal peer-to-peer payments.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## The Opportunity
 
-## Deploy on Vercel
+There is growing demand for:
+- creator monetisation
+- freelance and remote payments
+- casual crypto transfers
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+But **most users do not want financial transparency by default**.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Silch sits between fully public wallets and heavy privacy protocols:
+- no mixers
+- no new chains
+- no complex cryptography for users
+
+Just better defaults.
+
+---
+
+## Who It’s For
+
+### Creators
+Accept tips or one-off payments without publishing your full income history.
+
+### Freelancers
+Send private payment links instead of reusable wallet addresses.
+
+### Everyday Users
+Make casual transfers without permanently linking wallets.
+
+---
+
+## What Makes Silch Different
+
+- One-time payment addresses
+- No address reuse
+- No persistent on-chain relationships
+- Works with standard Solana transfers
+- Instant payment detection via WebSocket subscriptions
+
+Silch improves privacy **without changing the blockchain**.
+
+---
+
+## How It Works
+
