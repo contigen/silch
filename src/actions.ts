@@ -120,17 +120,21 @@ export async function createPaymentLink(intentId: string) {
 
 export async function getEphemeralIntent(intentId: string) {
   const intent = await getEphemeralIntentById(intentId)
-
-  if (!intent) {
-    throw new Error('Payment link not found or has expired')
-  }
-
-  if (intent.expiresAt < new Date()) {
-    throw new Error('Payment link has expired')
-  }
+  if (!intent)
+    return {
+      success: false,
+      error: 'Payment link not found or has expired',
+    }
+  if (intent.expiresAt < new Date())
+    return {
+      success: false,
+      error: 'Payment link has expired',
+    }
 
   return {
+    success: true,
     id: intent.id,
+    error: null,
     ephemeralAddress: intent.ephemeralAddress,
     expectedLamports: intent.expectedLamports,
     expiresAt: intent.expiresAt,

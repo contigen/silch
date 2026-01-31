@@ -45,10 +45,18 @@ export default function PaymentPage({ params }: PageProps<'/pay/[id]'>) {
     async function fetchIntent() {
       try {
         const data = await getEphemeralIntent(intentId)
-        setIntentData({
-          ...data,
-          expiresAt: new Date(data.expiresAt).toLocaleString(),
-        })
+        if (data.success === false && data.error) {
+          throw new Error(data.error)
+        }
+        if (data.success && data.id && data.expiresAt)
+          setIntentData({
+            id: data.id,
+            ephemeralAddress: data.ephemeralAddress || '',
+            expectedLamports: data.expectedLamports || 0n,
+            expiresAt: new Date(data.expiresAt).toLocaleString(),
+            claimed: data.claimed || false,
+            note: data.note || null,
+          })
       } catch (err) {
         const message =
           err instanceof Error ? err.message : 'Failed to load payment details'
