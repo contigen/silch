@@ -282,12 +282,7 @@ export async function submitPaymentTransaction(
       .sendTransaction(signedTransactionBase58 as Base64EncodedWireTransaction)
       .send()
 
-    console.log('[submitPaymentTransaction] Transaction successful:', signature)
-
-    // Wait for transaction confirmation before proceeding
-    console.log(
-      '[submitPaymentTransaction] Waiting for transaction confirmation...',
-    )
+    console.log('[submitPaymentTransaction] Transaction successful')
     await waitForTransactionConfirmation(client, signature)
     console.log('[submitPaymentTransaction] Transaction confirmed on-chain')
     await updateEphemeralIntentPaid(intentId)
