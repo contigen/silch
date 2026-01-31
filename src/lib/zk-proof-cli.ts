@@ -6,21 +6,37 @@ import { promisify } from 'node:util'
 const exec = promisify(execFile)
 
 function getSnarkjsPath() {
+  console.log('[getSnarkjsPath] process.cwd():', process.cwd())
+
   const possiblePaths = [
     path.join(process.cwd(), 'node_modules', 'snarkjs', 'build', 'cli.cjs'),
-    // Fallback to symlink (local development)
     path.join(process.cwd(), 'node_modules', '.bin', 'snarkjs'),
-    // Alternative location
     path.join(process.cwd(), 'node_modules', 'snarkjs', 'cli.js'),
   ]
 
+  console.log('[getSnarkjsPath] Checking paths:', possiblePaths)
+
   for (const snarkjsPath of possiblePaths) {
+    console.log(`[getSnarkjsPath] Checking: ${snarkjsPath}, exists: ${fs.existsSync(snarkjsPath)}`)
     if (fs.existsSync(snarkjsPath)) {
       console.log(`[getSnarkjsPath] Found snarkjs at: ${snarkjsPath}`)
       return snarkjsPath
     }
   }
-  console.log('[getSnarkjsPath] No snarkjs binary found, using PATH')
+
+  // List what's actually in node_modules to debug
+  try {
+    const nmPath = path.join(process.cwd(), 'node_modules', 'snarkjs')
+    if (fs.existsSync(nmPath)) {
+      console.log('[getSnarkjsPath] Contents of node_modules/snarkjs:', fs.readdirSync(nmPath))
+    } else {
+      console.log('[getSnarkjsPath] node_modules/snarkjs does not exist!')
+    }
+  } catch (e) {
+    console.error('[getSnarkjsPath] Error listing directory:', e)
+  }
+
+  console.log('[getSnarkjsPath] No snarkjs binary found, using PATH fallback')
   return 'snarkjs'
 }
 
