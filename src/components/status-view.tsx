@@ -264,6 +264,7 @@ export function StatusView({ status, proofData }: StatusViewProps) {
             <Button
               variant='ghost'
               className='w-full text-foreground/70 hover:text-foreground hover:bg-transparent'
+              asChild
             >
               <Link href='/'>Create Another Payment Link</Link>
             </Button>
