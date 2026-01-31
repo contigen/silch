@@ -140,7 +140,6 @@ export async function getEphemeralIntent(intentId: string) {
 }
 
 export async function buildPaymentTransaction(intentId: string) {
-  await getUserId()
   const client = await createClient()
 
   const intent = await getEphemeralIntentById(intentId)
@@ -229,7 +228,6 @@ export async function submitPaymentTransaction(
   intentId: string,
   signedTransactionBase58: string,
 ) {
-  await getUserId()
   const client = await createClient()
   const intent = await getEphemeralIntentById(intentId)
   if (!intent) throw new Error('Intent not found')
@@ -338,14 +336,10 @@ async function drainEphemeralAccount(intent: Intent) {
 }
 
 export async function getPaymentStatus(intentId: string) {
-  const userId = await getUserId()
   const intent = await getEphemeralIntentById(intentId)
   if (!intent) {
     throw new Error('Payment not found')
   }
-  // if (intent.userId !== userId) {
-  //   throw new Error('Unauthorized to view this payment')
-  // }
   // Generate a unique receipt hash (deterministic but not revealing)
   const receiptHash = `0x${Buffer.from(`${intentId}-${intent.createdAt.getTime()}`).toString('hex').slice(0, 64)}`
 

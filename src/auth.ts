@@ -40,11 +40,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async authorized({ request: req, auth }) {
-      const PUBLIC_ROUTES = [`/connect`]
+      const PUBLIC_ROUTES = ['/connect', '/pay', '/status']
       const { pathname } = req.nextUrl
       const isLoggedIn = !!auth?.user.walletAddress
-      const isAPublicRoute = PUBLIC_ROUTES.some(route => route === pathname)
-      if (isLoggedIn && isAPublicRoute) {
+      const isAPublicRoute = PUBLIC_ROUTES.some(
+        route => pathname === route || pathname.startsWith(route),
+      )
+      if (isLoggedIn && pathname === '/connect') {
         const searchParams = req.nextUrl.searchParams
         const callbackURL = searchParams.get('callbackUrl')
         if (callbackURL) {
