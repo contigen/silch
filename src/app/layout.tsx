@@ -1,9 +1,8 @@
-import React from 'react'
-import type { Metadata } from 'next'
 import { GeistMono } from 'geist/font/mono'
+import type { Metadata } from 'next'
 import './globals.css'
-import { auth } from '@/auth'
 import { SessionProvider } from 'next-auth/react'
+import { auth } from '@/auth'
 import { Toaster } from '@/components/ui/sonner'
 
 export const metadata: Metadata = {
@@ -20,7 +19,7 @@ export default async function RootLayout({
   return (
     <html lang='en' suppressHydrationWarning>
       <body
-        className={`${GeistMono.className} antialiased`}
+        className={`${GeistMono.className} ${GeistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         <SessionProvider session={session}>{children}</SessionProvider>
