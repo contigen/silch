@@ -9,7 +9,7 @@ export async function generateAndVerifyZkProofCLI(
   intentId: string,
   circuitInput: Record<string, string>,
 ) {
-  const baseDir = path.join(process.cwd(), 'tmp', intentId)
+  const baseDir = path.join('/tmp', intentId)
   fs.mkdirSync(baseDir, { recursive: true })
   try {
     const inputPath = path.join(baseDir, 'input.json')
@@ -49,7 +49,7 @@ export async function generateAndVerifyZkProofCLI(
 }
 
 function cleanupZkTempDir(intentId: string) {
-  const dir = path.join(process.cwd(), 'tmp', intentId)
+  const dir = path.join('/tmp', intentId)
 
   try {
     if (!fs.existsSync(dir)) return

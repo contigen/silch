@@ -6,7 +6,7 @@ import { promisify } from 'node:util'
 const exec = promisify(execFile)
 
 function tmpDir(intentId: string) {
-  const dir = path.join(process.cwd(), 'tmp', intentId)
+  const dir = path.join('/tmp', intentId)
   fs.mkdirSync(dir, { recursive: true })
   return dir
 }
