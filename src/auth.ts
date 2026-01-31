@@ -8,7 +8,6 @@ import { createOrGetUser } from './lib/db-queries'
 declare module 'next-auth/jwt' {
   interface JWT {
     walletAddress?: string
-    agentWalletAddress?: string
     id?: string
   }
 }
@@ -17,7 +16,6 @@ declare module 'next-auth' {
   interface Session {
     user: {
       walletAddress?: string
-      agentWalletAddress?: string
     } & DefaultSession['user']
   }
 }
