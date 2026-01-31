@@ -5,6 +5,14 @@ import { promisify } from 'node:util'
 
 const exec = promisify(execFile)
 
+function getSnarkjsPath() {
+  const localBin = path.join(process.cwd(), 'node_modules', '.bin', 'snarkjs')
+  if (fs.existsSync(localBin)) {
+    return localBin
+  }
+  return 'snarkjs'
+}
+
 function tmpDir(intentId: string) {
   const dir = path.join('/tmp', intentId)
   fs.mkdirSync(dir, { recursive: true })
@@ -29,8 +37,8 @@ async function runProver(dir: string) {
     path.join(dir, 'witness.wtns'),
   ])
 
-  await exec('npx', [
-    'snarkjs',
+  const snarkjsPath = getSnarkjsPath()
+  await exec(snarkjsPath, [
     'groth16',
     'prove',
     zkey,

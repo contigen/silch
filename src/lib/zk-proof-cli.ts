@@ -5,6 +5,14 @@ import { promisify } from 'node:util'
 
 const exec = promisify(execFile)
 
+function getSnarkjsPath() {
+  const localBin = path.join(process.cwd(), 'node_modules', '.bin', 'snarkjs')
+  if (fs.existsSync(localBin)) {
+    return localBin
+  }
+  return 'snarkjs'
+}
+
 export async function generateAndVerifyZkProofCLI(
   intentId: string,
   circuitInput: Record<string, string>,
@@ -30,8 +38,8 @@ export async function generateAndVerifyZkProofCLI(
       witnessPath,
     ])
 
-    await exec('npx', [
-      'snarkjs',
+    const snarkjsPath = getSnarkjsPath()
+    await exec(snarkjsPath, [
       'groth16',
       'prove',
       zkey,
@@ -40,7 +48,7 @@ export async function generateAndVerifyZkProofCLI(
       publicPath,
     ])
 
-    await exec('npx', ['snarkjs', 'groth16', 'verify', vkey, publicPath, proofPath])
+    await exec(snarkjsPath, ['groth16', 'verify', vkey, publicPath, proofPath])
     const proof = JSON.parse(fs.readFileSync(proofPath, 'utf8'))
     const publicSignals = JSON.parse(fs.readFileSync(publicPath, 'utf8'))
     return { proof, publicSignals }
