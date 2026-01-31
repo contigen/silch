@@ -16,7 +16,7 @@ export function Header() {
           href='/'
           className='flex items-center gap-2 hover:opacity-70 transition-opacity'
         >
-          <Rocket className='size-4 text-primary' />
+          <div className='size-5 bg-[#1a1a1a] rounded-[4px] border border-black' />
           <span className='text-lg font-semibold text-foreground'>Silch</span>
         </Link>
         <div hidden={isLoggedIn}>
