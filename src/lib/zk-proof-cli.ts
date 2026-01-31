@@ -7,7 +7,6 @@ const exec = promisify(execFile)
 
 function getSnarkjsPath() {
   const possiblePaths = [
-    // This is where snarkjs actually is (works on both local and Lambda)
     path.join(process.cwd(), 'node_modules', 'snarkjs', 'build', 'cli.cjs'),
     // Fallback to symlink (local development)
     path.join(process.cwd(), 'node_modules', '.bin', 'snarkjs'),
