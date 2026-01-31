@@ -6,10 +6,23 @@ import { promisify } from 'node:util'
 const exec = promisify(execFile)
 
 function getSnarkjsPath() {
-  const localBin = path.join(process.cwd(), 'node_modules', '.bin', 'snarkjs')
-  if (fs.existsSync(localBin)) {
-    return localBin
+  const possiblePaths = [
+    // Local node_modules
+    path.join(process.cwd(), 'node_modules', '.bin', 'snarkjs'),
+    // Vercel/Lambda might have it here
+    path.join(process.cwd(), 'node_modules', 'snarkjs', 'build', 'cli.cjs'),
+    // Or directly in snarkjs package
+    path.join(process.cwd(), 'node_modules', 'snarkjs', 'cli.js'),
+  ]
+
+  for (const snarkjsPath of possiblePaths) {
+    if (fs.existsSync(snarkjsPath)) {
+      console.log(`[getSnarkjsPath] Found snarkjs at: ${snarkjsPath}`)
+      return snarkjsPath
+    }
   }
+
+  console.log('[getSnarkjsPath] No snarkjs binary found, using PATH')
   return 'snarkjs'
 }
 
@@ -38,7 +51,8 @@ async function runProver(dir: string) {
   ])
 
   const snarkjsPath = getSnarkjsPath()
-  await exec(snarkjsPath, [
+  await exec('node', [
+    snarkjsPath,
     'groth16',
     'prove',
     zkey,
