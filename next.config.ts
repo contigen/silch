@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     return config
   },
   outputFileTracingIncludes: {
-    '/api/**': ['node_modules/snarkjs/**/*'],
+    '/**': ['./node_modules/snarkjs/**'],
   },
 };
 
