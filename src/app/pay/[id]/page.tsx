@@ -128,10 +128,12 @@ export default function PaymentPage({ params }: PageProps<'/pay/[id]'>) {
 
       setLoadingStep(3)
       await submitPaymentTransaction(intentId, signedBase58)
-      await subscribeToEphemeralPayment(intentId).catch(err => {
-        console.error('Subscription error:', err)
-        toast.warning('Failed to subscribe to payment confirmation')
-      })
+      await subscribeToEphemeralPayment(intentId)
+        .then(() => toast.info('Payment confirmed on-chain'))
+        .catch(err => {
+          console.error('Subscription error:', err)
+          toast.warning('Failed to subscribe to payment confirmation')
+        })
       setState('success')
       toast.success('Payment sent successfully')
       await new Promise(resolve => setTimeout(resolve, 2_000))
