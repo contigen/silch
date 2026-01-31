@@ -16,15 +16,26 @@ model User {
 }
 
 model EphemeralIntent {
-  id               String    @id @default(uuid())
+  id               String     @id @default(uuid())
   userId           String
-  user             User      @relation(fields: [userId], references: [id])
+  user             User       @relation(fields: [userId], references: [id])
   ephemeralAddress String
   encryptedSecret  String
   expectedLamports BigInt
   expiresAt        DateTime
   paidAt           DateTime?
   note             String?
-  claimed          Boolean   @default(false)
-  createdAt        DateTime  @default(now())
+  claimed          Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  zkReceipt        ZkReceipt?
+}
+
+model ZkReceipt {
+  id                String          @id @default(uuid())
+  nullifier         String          @unique
+  proof             Json
+  publicSignals     Json
+  ephemeralIntentId String          @unique
+  createdAt         DateTime        @default(now())
+  ephemeralIntent   EphemeralIntent @relation(fields: [ephemeralIntentId], references: [id])
 }
