@@ -1,8 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  reactCompiler: true,
+  webpack: (config) => {
+    config.externals.push('pino-pretty', 'lokijs', 'encoding')
+    return config
+  },
+  outputFileTracingIncludes: {
+    '/api/**': ['node_modules/snarkjs/**/*'],
+  },
 };
 
 export default nextConfig;
