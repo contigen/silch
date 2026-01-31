@@ -20,7 +20,7 @@
         "circomlibjs": "^0.1.7",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
-        "geist": "1.1.0",
+        "geist": "^1.5.1",
         "lucide-react": "^0.563.0",
         "next": "^16.1.6",
         "next-auth": "^5.0.0-beta.30",
@@ -646,7 +646,7 @@
 
     "fraction.js": ["fraction.js@5.3.4", "", {}, "sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ=="],
 
-    "geist": ["geist@1.1.0", "", { "peerDependencies": { "next": "^13.2 || ^14" } }, "sha512-UwZH+ekwAt1T5XYlviFD+jUXFeRRawDDT8RtpJ//IHTPXlVIO6BCcZ8M0Pxg1K/FT3H8HLn3KJqMsPLHbo1HNg=="],
+    "geist": ["geist@1.5.1", "", { "peerDependencies": { "next": ">=13.2.0" } }, "sha512-mAHZxIsL2o3ZITFaBVFBnwyDOw+zNLYum6A6nIjpzCGIO8QtC3V76XF2RnZTyLx1wlDTmMDy8jg3Ib52MIjGvQ=="],
 
     "generate-function": ["generate-function@2.3.1", "", { "dependencies": { "is-property": "^1.0.2" } }, "sha512-eeB5GfMNeevm/GRYq20ShmsaGcmI81kIX2K9XQx5miC8KdHaC6Jm0qQ8ZNeGOi7wYB8OsdxKs+Y2oVuTFuVwKQ=="],
 
