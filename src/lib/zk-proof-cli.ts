@@ -30,7 +30,8 @@ export async function generateAndVerifyZkProofCLI(
       witnessPath,
     ])
 
-    await exec('snarkjs', [
+    await exec('npx', [
+      'snarkjs',
       'groth16',
       'prove',
       zkey,
@@ -39,7 +40,7 @@ export async function generateAndVerifyZkProofCLI(
       publicPath,
     ])
 
-    await exec('snarkjs', ['groth16', 'verify', vkey, publicPath, proofPath])
+    await exec('npx', ['snarkjs', 'groth16', 'verify', vkey, publicPath, proofPath])
     const proof = JSON.parse(fs.readFileSync(proofPath, 'utf8'))
     const publicSignals = JSON.parse(fs.readFileSync(publicPath, 'utf8'))
     return { proof, publicSignals }

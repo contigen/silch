@@ -29,7 +29,8 @@ async function runProver(dir: string) {
     path.join(dir, 'witness.wtns'),
   ])
 
-  await exec('snarkjs', [
+  await exec('npx', [
+    'snarkjs',
     'groth16',
     'prove',
     zkey,
