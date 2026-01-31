@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import type React from 'react'
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -12,10 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { PrivacyIndicators } from './privacy-indicators'
+import { PrivacyBenefits } from './privacy-benefits'
 
 type PaymentFormProps = {
-  onSubmit: (data: any) => void
+  onSubmit: (data: {
+    token: string
+    amount: string
+    expiry: string
+    note: string
+  }) => void
   isLoading?: boolean
 }
 
@@ -36,45 +41,63 @@ export function PaymentForm({ onSubmit, isLoading }: PaymentFormProps) {
       className='space-y-6 w-full max-w-md bg-white border border-border rounded-md p-8'
     >
       <div className='space-y-3'>
-        <label className='text-xs font-medium text-foreground/60 uppercase tracking-wider'>
-          Select Token
+        <label
+          className='text-xs font-medium text-foreground/60 uppercase tracking-wider'
+          htmlFor='token'
+        >
+          Token
         </label>
         <Select value={token} onValueChange={setToken}>
-          <SelectTrigger className='w-full bg-muted border-border'>
+          <SelectTrigger
+            className='w-full bg-muted! border-border rounded-sm'
+            id='token'
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value='SOL'>SOL (Solana)</SelectItem>
-            <SelectItem value='USDC'>USDC</SelectItem>
-            <SelectItem value='USDT'>USDT</SelectItem>
+            <SelectItem value='USDC' disabled>
+              USDC
+            </SelectItem>
+            <SelectItem value='USDT' disabled>
+              USDT
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       <div className='space-y-3'>
-        <label className='text-xs font-medium text-foreground/60 uppercase tracking-wider'>
+        <label
+          className='text-xs font-medium text-foreground/60 uppercase tracking-wider'
+          htmlFor='amount'
+        >
           Amount
         </label>
         <Input
           type='number'
+          id='amount'
           placeholder='0.00'
           value={amount}
           onChange={e => setAmount(e.target.value)}
-          className='w-full bg-muted border-border text-foreground placeholder:text-foreground/40'
+          className='w-full bg-muted! border-border text-foreground placeholder:text-foreground/40'
           step='0.01'
           required
         />
-        <p className='text-xs text-foreground/45'>
-          Amount will be encrypted on-chain
-        </p>
+        <p className='text-xs text-foreground/45'>Encrypted on-chain</p>
       </div>
 
       <div className='space-y-3'>
-        <label className='text-xs font-medium text-foreground/60 uppercase tracking-wider'>
-          Link Expiry
+        <label
+          className='text-xs font-medium text-foreground/60 uppercase tracking-wider'
+          htmlFor='expiry'
+        >
+          Expiry
         </label>
         <Select value={expiry} onValueChange={setExpiry}>
-          <SelectTrigger className='w-full bg-muted border-border'>
+          <SelectTrigger
+            className='w-full bg-muted! border-border rounded-sm'
+            id='expiry'
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -87,26 +110,32 @@ export function PaymentForm({ onSubmit, isLoading }: PaymentFormProps) {
       </div>
 
       <div className='space-y-3'>
-        <label className='text-xs font-medium text-foreground/60 uppercase tracking-wider'>
+        <label
+          className='text-xs font-medium text-foreground/60 uppercase tracking-wider'
+          htmlFor='note'
+        >
           Private Note (Optional)
         </label>
         <Input
           type='text'
           placeholder='Add a note...'
           value={note}
+          id='note'
           onChange={e => setNote(e.target.value)}
-          className='w-full bg-muted border-border text-foreground placeholder:text-foreground/40'
+          className='w-full bg-muted! border-border text-foreground placeholder:text-foreground/40'
         />
       </div>
 
-      <PrivacyIndicators />
+      <div className='border-t border-border pt-4 -mx-8 px-8'>
+        <PrivacyBenefits />
+      </div>
 
       <Button
         type='submit'
-        className='w-full h-11 bg-foreground hover:bg-foreground/90 text-white font-medium rounded-md'
+        className='w-full h-11 bg-foreground hover:bg-foreground/90 text-background font-medium rounded-sm mt-2'
         disabled={isLoading}
       >
-        {isLoading ? 'Generating...' : 'Generate payment link'}
+        {isLoading ? 'Creating link...' : 'Create link'}
       </Button>
     </form>
   )
