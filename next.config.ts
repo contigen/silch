@@ -1,7 +1,7 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  webpack: (config) => {
+  webpack: config => {
     config.externals.push('pino-pretty', 'lokijs', 'encoding')
     return config
   },
@@ -48,6 +48,6 @@ const nextConfig: NextConfig = {
       './node_modules/word-wrap/**',
     ],
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig
