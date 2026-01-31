@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
       './node_modules/ffjavascript/**',
       './node_modules/fastfile/**',
       './node_modules/circom_runtime/**',
+      './node_modules/wasmcurves/**',
+      './node_modules/wasmbuilder/**',
     ],
   },
 };
