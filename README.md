@@ -79,7 +79,7 @@ Silch improves privacy **without changing the blockchain**.
    - Connects their wallet
    - Sends SOL to the ephemeral address
    - Transaction is verified on-chain
-   - Generates zero-knowledge proof of payment
+   - Generates zero-knowledge proof of payment (groth16 via snarkjs)
 
 3. **Funds are claimed automatically**
    - System detects payment via WebSocket subscription
