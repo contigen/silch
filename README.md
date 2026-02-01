@@ -121,3 +121,46 @@ Silch uses a **dual authentication model**:
 - **No on-chain linkability** — Payments cannot be traced back to the recipient's main wallet
 - **Zero-knowledge proofs** — Payments can be proofed without revealing transaction details
 - **Minimal metadata** — Status pages show timestamps and notes, but no wallet addresses or transaction hashes
+
+---
+
+## Environment Setup
+
+### Prerequisites
+
+- Node.js/Bun
+- Prisma PostgreSQL
+- Phantom wallet browser extension
+
+### Required Environment Variables
+
+Create a `.env` file in the project root with the following variables:
+
+```bash
+# Database
+# PostgreSQL connection string from Prisma
+DATABASE_URL="postgresql://user:password@localhost:5432/silch"
+
+# Encryption
+# Strong random password for AES-256-GCM encryption of ephemeral private keys
+# Generate with: openssl rand -base64 32
+WALLET_ENCRYPTION_PASSWORD="your-secure-random-password-here"
+
+# Solana RPC (optional)
+# Alchemy API key for Solana devnet RPC
+# If not provided, defaults to public Solana devnet endpoints
+# Get your key from: https://www.alchemy.com/
+ALCHEMY_API_KEY=""
+
+# NextAuth
+# Random string for NextAuth session encryption
+# Generate with: bunx(npx) auth secret
+NEXTAUTH_SECRET="your-nextauth-secret"
+
+```
+
+### Notes
+
+- The application runs on Solana **devnet** by default
+- You'll need devnet SOL in your Phantom wallet for testing (get from [Solana faucet](https://faucet.solana.com/))
+- ZK circuit files are pre-compiled in `/zk/build` — no need to recompile unless modifying the circuit
